@@ -123,9 +123,11 @@ var game = (function(){
         });
         var screenLeftArea = parseInt(render.width / 2 - render.width * 0.125);
         var screenRightArea = parseInt(render.width / 2 + render.width * 0.125);
+
+        window.debugText = 'Touch X: 0';
         $(document).on('touchmove', function(e){
           var currentX = e.originalEvent.touches[0].clientX;
-          window.debugText = currentX;
+          window.debugText = 'Touch X: ' + (currentX || 0);
           if(currentX > screenRightArea){
               window.turnRight = true;
               window.turnLeft = false;
