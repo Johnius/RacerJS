@@ -26,10 +26,10 @@ var game = (function(){
     var numberOfSegmentPerColor = 4;
     
     var render = {
-        width: 320,
-        height: 240,
+        width: Math.min(Math.max(document.documentElement.clientWidth, window.innerWidth || 0), 320),
+        height: Math.min(Math.max(document.documentElement.clientHeight, window.innerHeight || 0), 480),
         depthOfField: 150,
-        camera_distance: 30,
+        camera_distance: 15,
         camera_height: 100
     };
     
@@ -115,6 +115,28 @@ var game = (function(){
         $(document).keyup(function(e){
             keys[e.keyCode] = false;
         });
+        $(document).on('touchstart', function(e){
+            keys[0] = true;
+        });
+        $(document).on('touchend', function(e){
+            keys[0] = false;
+        });
+        var screenLeftArea = parseInt(render.width / 2 - render.width * 0.125);
+        var screenRightArea = parseInt(render.width / 2 + render.width * 0.125);
+        $(document).on('touchmove', function(e){
+          var currentX = e.originalEvent.touches[0].clientX;
+          window.debugText = currentX;
+          if(currentX > screenRightArea){
+              window.turnRight = true;
+              window.turnLeft = false;
+          } else if (currentX < screenLeftArea) {
+              window.turnLeft = true;
+              window.turnRight = false;
+          } else {
+            window.turnLeft = false;
+            window.turnRight = false;
+          }
+        });
         generateRoad();
     };
     
@@ -130,11 +152,11 @@ var game = (function(){
         drawString("Credits:",{x: 120, y: 120});
         drawString("code, art: Selim Arsever",{x: 55, y: 130});
         drawString("font: spicypixel.net",{x: 70, y: 140});
-        if(keys[32]){
+        // if(keys[32]){
             clearInterval(splashInterval);
             gameInterval = setInterval(renderGameFrame, 30);
             startTime= new Date();
-        }
+        // }
     }
     
     //renders one frame
@@ -154,7 +176,7 @@ var game = (function(){
             }
         } else {
             // read acceleration controls
-            if (keys[38]) { // 38 up
+            if (keys[38] || keys[0]) { // 38 up
                 //player.position += 0.1;
                 player.speed += player.acceleration;
             } else if (keys[40]) { // 40 down
@@ -166,9 +188,11 @@ var game = (function(){
         player.speed = Math.max(player.speed, 0); //cannot go in reverse
         player.speed = Math.min(player.speed, player.maxSpeed); //maximum speed
         player.position += player.speed;
+
+        var carPosY = 260;
         
         // car turning
-        if (keys[37]) {
+        if (keys[37] || window.turnLeft) {
             // 37 left
             if(player.speed > 0){
                 player.posx -= player.turning;
@@ -176,9 +200,9 @@ var game = (function(){
             var carSprite = {
                 a: car_4,
                 x: 117,
-                y: 190
+                y: carPosY
             };
-        } else if (keys[39]) {
+        } else if (keys[39] || window.turnRight) {
             // 39 right
             if(player.speed > 0){
                 player.posx += player.turning;
@@ -186,13 +210,13 @@ var game = (function(){
             var carSprite = {
                 a: car_8,
                 x: 125,
-                y: 190
+                y: carPosY
             };
         } else {
             var carSprite = {
                 a: car, 
-                x:125, 
-                y:190
+                x: 125, 
+                y: carPosY
             };
         }
         
@@ -306,6 +330,7 @@ var game = (function(){
         drawString(currentTimeString, {x: 1, y: 1});
         var speed = Math.round(player.speed / player.maxSpeed * 200);
         drawString(""+speed+"mph", {x: 1, y: 10});
+        drawString(String(window.debugText), {x: 1, y: 20});
     };
     
     
@@ -329,7 +354,7 @@ var game = (function(){
     var drawSegment = function (position1, scale1, offset1, position2, scale2, offset2, alternate, finishStart){
         var grass     = (alternate) ? "#eda" : "#dc9";
         var border    = (alternate) ? "#e00" : "#fff";
-        var road      = (alternate) ? "#999" : "#777";
+        var road      = "#777";
         var lane      = (alternate) ? "#fff" : "#777";
 
         if(finishStart){
