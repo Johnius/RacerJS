@@ -1,4 +1,6 @@
 var game = (function(){
+
+    var canvasObj = $("#c");
     
     var r = Math.random;
     
@@ -11,23 +13,30 @@ var game = (function(){
     var startTime;
     var lastDelta = 0;
     var currentTimeString = "";
+    var timeToFade = 0.25 * 30;
+    var timeToFadeOrig = timeToFade;
+    var finishOpacity = 0;
+    var prevFrameHeight = 0;
     
     var roadParam = {
         maxHeight: 900,
         maxCurve:  400,
-        length:    12,
+        length:    20,
         curvy:     0.8,
         mountainy: 0.8,
-        zoneSize:  250
+        zoneSize:  350
     }
         
     var road = [];
     var roadSegmentSize = 5;
     var numberOfSegmentPerColor = 4;
-    
+
+    var clientWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+    var clientHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
     var render = {
-        width: Math.min(Math.max(document.documentElement.clientWidth, window.innerWidth || 0), 320),
-        height: Math.min(Math.max(document.documentElement.clientHeight, window.innerHeight || 0), 480),
+        width: Math.min(clientWidth, 320),
+        height: Math.min((clientHeight < clientWidth ? clientWidth : clientHeight), 480),
         depthOfField: 150,
         camera_distance: 15,
         camera_height: 100
@@ -99,7 +108,7 @@ var game = (function(){
     //initialize the game
     var init = function(){
         // configure canvas
-        canvas = $("#c")[0];
+        canvas = canvasObj.get(0);
         context = canvas.getContext('2d');
         
         canvas.height = render.height;
@@ -114,30 +123,31 @@ var game = (function(){
         });
         $(document).keyup(function(e){
             keys[e.keyCode] = false;
-        });
-        $(document).on('touchstart', function(e){
-            keys[0] = true;
-        });
-        $(document).on('touchend', function(e){
-            keys[0] = false;
-        });
-        var screenLeftArea = parseInt(render.width / 2 - render.width * 0.125);
-        var screenRightArea = parseInt(render.width / 2 + render.width * 0.125);
 
-        window.debugText = 'Touch X: 0';
-        $(document).on('touchmove', function(e){
+            switch (e.keyCode) {
+                case 49:
+                    render.camera_distance++;
+                    break;
+                case 50:
+                    --render.camera_distance;
+                    break;
+            }
+        });
+
+        var screenCenter = parseInt(render.width / 2);
+        $(document).on('touchstart', function(e){
           var currentX = e.originalEvent.touches[0].clientX;
-          window.debugText = 'Touch X: ' + (currentX || 0);
-          if(currentX > screenRightArea){
-              window.turnRight = true;
-              window.turnLeft = false;
-          } else if (currentX < screenLeftArea) {
-              window.turnLeft = true;
-              window.turnRight = false;
-          } else {
+          if(currentX > screenCenter){
+            window.turnRight = true;
             window.turnLeft = false;
+          } else {
+            window.turnLeft = true;
             window.turnRight = false;
           }
+        });
+        $(document).on('touchend', function(e){
+          window.turnLeft = false;
+          window.turnRight = false;
         });
         generateRoad();
     };
@@ -178,14 +188,14 @@ var game = (function(){
             }
         } else {
             // read acceleration controls
-            if (keys[38] || keys[0]) { // 38 up
+            // if (keys[38] || keys[0]) { // 38 up
                 //player.position += 0.1;
                 player.speed += player.acceleration;
-            } else if (keys[40]) { // 40 down
-                player.speed -= player.breaking;
-            } else {
-                player.speed -= player.deceleration;
-            }
+            // } else if (keys[40]) { // 40 down
+            //     player.speed -= player.breaking;
+            // } else {
+            //     player.speed -= player.deceleration;
+            // }
         }
         player.speed = Math.max(player.speed, 0); //cannot go in reverse
         player.speed = Math.min(player.speed, player.maxSpeed); //maximum speed
@@ -232,13 +242,6 @@ var game = (function(){
         // --------------------------
         var absoluteIndex = Math.floor(player.position / roadSegmentSize);
         
-        if(absoluteIndex >= roadParam.length-render.depthOfField-1){
-            clearInterval(gameInterval);
-            drawString("You did it!", {x: 100, y: 20});
-            drawString("Press t to tweet your time.", {x: 30, y: 30});
-            $(window).keydown(function(e){ if(e.keyCode == 84) {location.href="http://twitter.com/home?status="+escape("I've just raced through #racer10k in "+currentTimeString+"!")}});
-        }
-        
         var currentSegmentIndex    = (absoluteIndex - 2) % road.length;
         var currentSegmentPosition = (absoluteIndex - 2) * roadSegmentSize - player.position;
         var currentSegment         = road[currentSegmentIndex];
@@ -272,6 +275,7 @@ var game = (function(){
             var currentScaling       = startScaling;
             
             if(currentHeight > endProjectedHeight){
+                var drw = function (position1, scale1, offset1, position2, scale2, offset2, alternate, finishStart){}
                 drawSegment(
                     render.height / 2 + currentHeight, 
                     currentScaling, currentSegment.curve - baseOffset - lastDelta * currentScaling, 
@@ -333,6 +337,19 @@ var game = (function(){
         var speed = Math.round(player.speed / player.maxSpeed * 200);
         drawString(""+speed+"mph", {x: 1, y: 10});
         drawString(String(window.debugText), {x: 1, y: 20});
+        drawString("Cam dist: " + String(render.camera_distance), {x: 1, y: 30});
+        
+        // Check final
+        if(absoluteIndex >= roadParam.length-render.depthOfField-1){
+            if (--timeToFade <= 0)
+                clearInterval(gameInterval);
+
+            opacity = (timeToFadeOrig - timeToFade) / timeToFadeOrig;
+            context.fillStyle = 'rgba(0,0,0,'+opacity+')';
+            context.fillRect(0, 0, render.width, render.height);
+            drawString("You did it!", {x: 100, y: 20});
+            drawString("Press t to tweet your time.", {x: 30, y: 30});
+        }
     };
     
     
@@ -395,7 +412,7 @@ var game = (function(){
     }
     
     var drawBackground = function(position) {
-        var first = position / 2 % (background.w);
+        var first = position / 7 % (background.w);
         drawImage(background, first-background.w +1, 0, 1);
         drawImage(background, first+background.w -1, 0, 1);
         drawImage(background, first, 0, 1);
@@ -418,7 +435,7 @@ var game = (function(){
         }
         
         var transform = "scale(" + scale + ")";
-        $("#c").css("MozTransform", transform).css("transform", transform).css("WebkitTransform", transform).css({
+        canvasObj.css("MozTransform", transform).css("transform", transform).css("WebkitTransform", transform).css({
             top: (scale - 1) * render.height / 2,
             left: (scale - 1) * render.width / 2 + ($(window).width() - render.width * scale) / 2
         });
@@ -466,7 +483,7 @@ var game = (function(){
                 } else {
                     if(r() < 0.05) {
                         var spriteType = tree;//([tree,rock])[Math.floor(r()*1.9)];
-                        var sprite = {type: spriteType, pos: 0.6 + 4*r()};
+                        var sprite = {type: spriteType, pos: 1 + 4*r()};
                         if(r() < 0.5){
                             sprite.pos = -sprite.pos;
                         }
