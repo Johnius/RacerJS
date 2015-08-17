@@ -20,26 +20,30 @@ var game = (function(){
     
     var roadParam = {
         maxHeight: 900,
-        maxCurve:  400,
+        maxCurve:  700,
         length:    20,
         curvy:     0.8,
-        mountainy: 0.8,
-        zoneSize:  350
+        mountainy: 4,
+        zoneSize:  300
     }
         
     var road = [];
     var roadSegmentSize = 5;
-    var numberOfSegmentPerColor = 4;
+    var numberOfSegmentPerColor = 10;
 
     var clientWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
     var clientHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 
+    var gameWidth = 800;
+    var gameHeight = 600;
+
+
     var render = {
-        width: Math.min(clientWidth, 320),
-        height: Math.min((clientHeight < clientWidth ? clientWidth : clientHeight), 480),
+        width: gameWidth,
+        height: gameHeight,
         depthOfField: 150,
         camera_distance: 15,
-        camera_height: 100
+        camera_height: 180
     };
     
     var player = {
@@ -48,7 +52,7 @@ var game = (function(){
         acceleration: 0.05,
         deceleration: 0.3,
         breaking: 0.6,
-        turning: 5.0,
+        turning: 7.0,
         posx: 0,
         maxSpeed: 15
     };
@@ -56,23 +60,26 @@ var game = (function(){
     var splashInterval;
     var gameInterval;
     
+    // Straight
     var car = { 
         x: 0,
-        y: 130,
-        w: 69,
-        h: 38
+        y: 980,
+        w: 296,
+        h: 200
     };
+    // Left
     var car_4 = { 
-        x: 70,
-        y: 130,
-        w: 77,
-        h: 38
+        x: 0,
+        y: 780,
+        w: 324,
+        h: 200
     };
+    // Right
     var car_8 = { 
-        x: 148,
-        y: 130,
-        w: 77,
-        h: 38
+        x: 0,
+        y: 1180,
+        w: 308,
+        h: 200
     };
     
     var background = {
@@ -94,6 +101,12 @@ var game = (function(){
         w: 11,
         h: 14
     };
+    var plakat = {
+        x: 0,
+        y: 180,
+        w: 371,
+        h: 300
+    };
     
     var logo = {
         x: 161,
@@ -101,6 +114,33 @@ var game = (function(){
         w: 115,
         h: 20
     };
+
+    var billboards = [
+        {
+            x: 0,
+            y: 180,
+            w: 372,
+            h: 300
+        },
+        {
+            x: 372,
+            y: 180,
+            w: 413,
+            h: 300
+        },
+        {
+            x: 0,
+            y: 480,
+            w: 372,
+            h: 300
+        },
+        {
+            x: 372,
+            y: 480,
+            w: 511,
+            h: 300
+        }
+    ]
     // -----------------------------
     // -- closure scoped function --
     // -----------------------------
@@ -120,6 +160,8 @@ var game = (function(){
         //register key handeling:
         $(document).keydown(function(e){
             keys[e.keyCode] = true;
+
+            window.activated = true;
         });
         $(document).keyup(function(e){
             keys[e.keyCode] = false;
@@ -131,10 +173,18 @@ var game = (function(){
                 case 50:
                     --render.camera_distance;
                     break;
+                case 51:
+                    render.camera_height = render.camera_height + 10;
+                    break;
+                case 52:
+                    render.camera_height = render.camera_height - 10;
+                    break;
             }
+
+            window.activated = false;
         });
 
-        var screenCenter = parseInt(render.width / 2);
+        var screenCenter = parseInt(clientWidth / 2);
         $(document).on('touchstart', function(e){
           var currentX = e.originalEvent.touches[0].clientX;
           if(currentX > screenCenter){
@@ -144,10 +194,12 @@ var game = (function(){
             window.turnLeft = true;
             window.turnRight = false;
           }
+          window.activated = true;
         });
         $(document).on('touchend', function(e){
           window.turnLeft = false;
           window.turnRight = false;
+          window.activated = false;
         });
         generateRoad();
     };
@@ -157,18 +209,12 @@ var game = (function(){
         context.fillStyle = "rgb(0,0,0)";
         context.fillRect(0, 0, render.width, render.height);
         
-        context.drawImage(spritesheet,  357, 9, 115, 20, 100, 20, 115, 40);
-        
-        drawString("Instructions:",{x: 100, y: 90});
-        drawString("space to start, arrows to drive",{x: 30, y: 100});
-        drawString("Credits:",{x: 120, y: 120});
-        drawString("code, art: Selim Arsever",{x: 55, y: 130});
-        drawString("font: spicypixel.net",{x: 70, y: 140});
-        // if(keys[32]){
+        context.drawImage(spritesheet, 372, 780, 800, 600, 0, 0, 800, 600);
+        if(window.activated){
             clearInterval(splashInterval);
             gameInterval = setInterval(renderGameFrame, 30);
             startTime= new Date();
-        // }
+        }
     }
     
     //renders one frame
@@ -182,7 +228,7 @@ var game = (function(){
         // -- Update the car state --
         // --------------------------
         
-        if (Math.abs(lastDelta) > 130){
+        if (Math.abs(lastDelta) > 350){
             if (player.speed > 3) {
                 player.speed -= 0.2;
             }
@@ -201,7 +247,8 @@ var game = (function(){
         player.speed = Math.min(player.speed, player.maxSpeed); //maximum speed
         player.position += player.speed;
 
-        var carPosY = 260;
+        var carPosY = gameHeight - car.h - (gameHeight * 0.1);
+        var carPosX = (gameWidth - car.h) / 2
         
         // car turning
         if (keys[37] || window.turnLeft) {
@@ -211,7 +258,7 @@ var game = (function(){
             }
             var carSprite = {
                 a: car_4,
-                x: 117,
+                x: (gameWidth - car_4.w) / 2,
                 y: carPosY
             };
         } else if (keys[39] || window.turnRight) {
@@ -221,13 +268,13 @@ var game = (function(){
             }
             var carSprite = {
                 a: car_8,
-                x: 125,
+                x: (gameWidth - car_8.w) / 2,
                 y: carPosY
             };
         } else {
             var carSprite = {
                 a: car, 
-                x: 125, 
+                x: (gameWidth - car.w) / 2, 
                 y: carPosY
             };
         }
@@ -335,9 +382,11 @@ var game = (function(){
         
         drawString(currentTimeString, {x: 1, y: 1});
         var speed = Math.round(player.speed / player.maxSpeed * 200);
-        drawString(""+speed+"mph", {x: 1, y: 10});
-        drawString(String(window.debugText), {x: 1, y: 20});
-        drawString("Cam dist: " + String(render.camera_distance), {x: 1, y: 30});
+        // drawString(""+speed+"mph", {x: 1, y: 10});
+        // drawString(String(window.debugText || '----'), {x: 1, y: 20});
+        // drawString("CAM DIST: " + String(render.camera_distance), {x: 1, y: 30});
+        // drawString("CAM HEIGHT: " + String(render.camera_height), {x: 1, y: 40});
+        // drawString("LAST DELTA: " + String(lastDelta), {x: 1, y: 50});
         
         // Check final
         if(absoluteIndex >= roadParam.length-render.depthOfField-1){
@@ -415,6 +464,8 @@ var game = (function(){
         var first = position / 7 % (background.w);
         drawImage(background, first-background.w +1, 0, 1);
         drawImage(background, first+background.w -1, 0, 1);
+        drawImage(background, first+background.w*2 -2, 0, 1);
+        drawImage(background, first+background.w*3 -3, 0, 1);
         drawImage(background, first, 0, 1);
     }
         
@@ -427,18 +478,26 @@ var game = (function(){
         }
     }    
     var resize = function(){
-        if ($(window).width() / $(window).height() > render.width / render.height) {
-            var scale = $(window).height() / render.height;
+        if ($(window).width() < 800) {
+            if ($(window).width() / $(window).height() > render.width / render.height) {
+                var scale = $(window).height() / render.height;
+            }
+            else {
+                var scale = $(window).width() / render.width;
+            }
+            
+            var transform = "scale(" + scale + ")";
+            canvasObj.css("MozTransform", transform).css("transform", transform).css("WebkitTransform", transform).css({
+                top: (scale - 1) * render.height / 2,
+                left: (scale - 1) * render.width / 2 + ($(window).width() - render.width * scale) / 2
+            });
+        } else {
+            canvasObj[0].style = '';
+            canvasObj.css({
+                left: '50%',
+                transform: 'translateX(-50%)'
+            });
         }
-        else {
-            var scale = $(window).width() / render.width;
-        }
-        
-        var transform = "scale(" + scale + ")";
-        canvasObj.css("MozTransform", transform).css("transform", transform).css("WebkitTransform", transform).css({
-            top: (scale - 1) * render.height / 2,
-            left: (scale - 1) * render.width / 2 + ($(window).width() - render.width * scale) / 2
-        });
     };
     
     // -------------------------------------
@@ -457,6 +516,7 @@ var game = (function(){
         var zones     = roadParam.length;
         while(zones--){
             // Generate current Zone
+
             var finalHeight;
             switch(currentStateH){
                 case 0:
@@ -478,24 +538,28 @@ var game = (function(){
 
             for(var i=0; i < roadParam.zoneSize; i++){
                 // add a tree
-                if(i % roadParam.zoneSize / 4 == 0){
-                    var sprite = {type: rock, pos: -0.55};
-                } else {
-                    if(r() < 0.05) {
-                        var spriteType = tree;//([tree,rock])[Math.floor(r()*1.9)];
-                        var sprite = {type: spriteType, pos: 1 + 4*r()};
-                        if(r() < 0.5){
-                            sprite.pos = -sprite.pos;
-                        }
-                    } else {
-                        var sprite = false;
+                if(r() < 0.25) {
+                    var spriteType = tree;//([tree,rock])[Math.floor(r()*1.9)];
+                    var sprite = {type: spriteType, pos: 1 + 4*r()};
+                    if(r() < 0.5){
+                        sprite.pos = -sprite.pos;
                     }
+                } else {
+                    var sprite = false;
                 }
                 road.push({
                     height: currentHeight+finalHeight / 2 * (1 + Math.sin(i/roadParam.zoneSize * Math.PI-Math.PI/2)),
                     curve: currentCurve+finalCurve / 2 * (1 + Math.sin(i/roadParam.zoneSize * Math.PI-Math.PI/2)),
                     sprite: sprite
                 })
+            }
+            if (zones % 4 === 0 && zones !== 0) {
+                var sprite = {type: billboards.shift(), pos: -0.55};
+                road.push({
+                    height: currentHeight+finalHeight / 2 * (1 + Math.sin(i/roadParam.zoneSize * Math.PI-Math.PI/2)),
+                    curve: currentCurve+finalCurve / 2 * (1 + Math.sin(i/roadParam.zoneSize * Math.PI-Math.PI/2)),
+                    sprite: sprite
+                });
             }
             currentHeight += finalHeight;
             currentCurve += finalCurve;
@@ -521,7 +585,7 @@ var game = (function(){
             spritesheet.onload = function(){
                 splashInterval = setInterval(renderSplashFrame, 30);
             };
-            spritesheet.src = "spritesheet.high.png";
+            spritesheet.src = "spritesheet.high.2.png";
         }
     }
 }());
