@@ -56,7 +56,7 @@ var game = (function(){
         maxHeight: 900,
         maxCurve:  700,
         length:    20,
-        curvy:     0.8,
+        curvy:     0,
         mountainy: 4,
         zoneSize:  300
     }
@@ -263,8 +263,10 @@ var game = (function(){
         top = (gameSize.height - splashHeight) / 2;
         left = (gameSize.width - splashWidth) / 2;
 
-
         context.drawImage(spritesheet, 372, 780, 800, 600, left, top, splashWidth, splashHeight);
+
+        drawText('Приветствую', {x: 0, y: 20});
+
         if(window.activated){
             clearInterval(splashInterval);
             gameInterval = setInterval(renderGameFrame, 30);
@@ -272,8 +274,8 @@ var game = (function(){
         }
     }
 
-    var deltaSlow = dpi > 100 ? 260 : 200;
-    if (!isMobile) deltaSlow = 350;
+    var deltaSlow = dpi > 100 ? 243 : 180;
+    if (!isMobile) deltaSlow = 325;
 
     //renders one frame
     var renderGameFrame = function(){
@@ -449,6 +451,7 @@ var game = (function(){
         drawString("H: " + String(gameHeight), {x: 1, y: 20});
         drawString("DPI: " + String(dpi), {x: 1, y: 30});
         drawString("DELTA: " + String(lastDelta), {x: 1, y: 40});
+        drawString("DLTSL: " + String(deltaSlow), {x: 1, y: 50})
 
         // Check final
         if(absoluteIndex >= roadParam.length-render.depthOfField-1){
@@ -537,6 +540,11 @@ var game = (function(){
             context.drawImage(spritesheet, (string.charCodeAt(i) - 32) * 8, 0, 8, 8, cur, pos.y, 8, 8);
             cur += 8;
         }
+    }
+    var drawText = function(string, options) {
+      context.font = "20px Arial";
+      context.fillStyle = options.color || 'white';
+      context.fillText(string, options.x, options.y);
     }
     function resize(){
         var gameSize = getGameSize();
