@@ -463,7 +463,7 @@
                   // --------------------------
                   // --     Draw the hud     --
                   // --------------------------
-                  drawString(""+Math.round(absoluteIndex/(roadParam.length-render.depthOfField)*100)+"%",{x: 287, y: 1});
+                  var percentsPassed = ""+Math.round(absoluteIndex/(roadParam.length-render.depthOfField)*100)+"%";
                   var now = new Date();
                   var diff = now.getTime() - startTime.getTime();
 
@@ -476,9 +476,12 @@
                   if(mili < 100) mili = "0" + mili;
                   if(mili < 10) mili = "0" + mili;
 
-                  currentTimeString = ""+min+":"+sec+":"+mili;
+                  currentTimeString = ""+min+":"+sec+"."+mili;
 
-                  drawString(currentTimeString, {x: 1, y: 1});
+                  drawText(currentTimeString, {x: gameWidth / 2, y: 0, size: 30, color: 'white', align: 'center', font: 'Courier New', bold: true});
+                  drawText(percentsPassed, {x: gameWidth - 10, y: 0, size: 30, color: 'white', align: 'end', font: 'Courier New', bold: true});
+
+                  // drawString(currentTimeString, {x: 1, y: 1});
                   var speed = Math.round(player.speed / player.maxSpeed * 200);
                   // drawString(""+speed+"mph", {x: 1, y: 10});
                   // drawString(String(window.debugText || '----'), {x: 1, y: 20});
@@ -486,11 +489,11 @@
                   // drawString("CAM HEIGHT: " + String(render.camera_height), {x: 1, y: 40});
                   // drawString("LAST DELTA: " + String(lastDelta), {x: 1, y: 50});
 
-                  drawString("W: " + String(gameWidth), {x: 1, y: 10});
-                  drawString("H: " + String(gameHeight), {x: 1, y: 20});
-                  drawString("DPI: " + String(dpi), {x: 1, y: 30});
-                  drawString("DELTA: " + String(lastDelta), {x: 1, y: 40});
-                  drawString("DLTSL: " + String(deltaSlow), {x: 1, y: 50})
+                  // drawString("W: " + String(gameWidth), {x: 1, y: 10});
+                  // drawString("H: " + String(gameHeight), {x: 1, y: 20});
+                  // drawString("DPI: " + String(dpi), {x: 1, y: 30});
+                  // drawString("DELTA: " + String(lastDelta), {x: 1, y: 40});
+                  // drawString("DLTSL: " + String(deltaSlow), {x: 1, y: 50});
 
                   // Check final
                   if(absoluteIndex >= roadParam.length-render.depthOfField-1){
@@ -509,6 +512,9 @@
                 // Clean screen
                 context.fillStyle = "#000";
                 context.fillRect(0, 0, render.width, render.height);
+                if (++timeToFade <= timeToFadeOrig) {
+                  context.globalAlpha = timeToFade/timeToFadeOrig;
+                }
                 var size = 40;
                 var scale = getGameScale();
                 var imageW = hashtag.w * scale;
@@ -516,9 +522,9 @@
                 var imageX = (gameWidth - imageW) / 2;
                 var imageY = (gameHeight - imageH) / 2;
 
-                drawImage(hashtag, imageX, imageY, scale);
+                drawImage(hashtag, imageX, imageY - imageH / 2, scale);
                 // drawText("Это финиш!", { x: gameWidth / 2, y: gameHeight / 2 - 10, size: size, align: 'center' });
-                drawText("ВАШЕ ВРЕМЯ " + currentTimeString, { x: gameWidth / 2, y: imageY + imageH + size * 0.5, size: size, align: 'center' });
+                drawText("ВАШЕ ВРЕМЯ " + currentTimeString, { x: gameWidth / 2, y: imageY + imageH / 2 + (size * 0.5 / 2), size: size, align: 'center' });
               }
 
 
@@ -602,8 +608,9 @@
               }
               var drawText = function(string, options) {
                 var fontSize = (options.size || 20) * getGameScale();
+                var fontFamily = options.font || 'Arial';
 
-                context.font = fontSize + "px Arial";
+                context.font = (options.bold ? 'bold ' : '') + fontSize + "px " + fontFamily;
                 context.textAlign = options.align || "start";
                 context.fillStyle = options.color || 'white';
                 context.fillText(string, options.x, options.y + fontSize);
@@ -694,7 +701,7 @@
                           })
                       }
                       if (zones % 4 === 0 && zones !== 0) {
-                          var sprite = {type: billboards.shift(), pos: -0.55};
+                          var sprite = {type: billboards.shift(), pos: (Math.random() > 0.5 ? 1.55 : -0.55)};
                           road.push({
                               height: currentHeight+finalHeight / 2 * (1 + Math.sin(i/roadParam.zoneSize * Math.PI-Math.PI/2)),
                               curve: currentCurve+finalCurve / 2 * (1 + Math.sin(i/roadParam.zoneSize * Math.PI-Math.PI/2)),
