@@ -86,6 +86,8 @@
               var finishOpacity = 0;
               var prevFrameHeight = 0;
 
+              window.pos = {x: 0, y: 0};
+
               var roadParam = {
                   maxHeight: 900,
                   maxCurve:  700,
@@ -316,6 +318,34 @@
               var deltaSlow = dpi > 100 ? 243 : 180;
               if (!isMobile) deltaSlow = 325;
 
+              var initFinish = function(){
+                var pointerEventToXY = function(e){
+                  var out = {x:0, y:0};
+
+                  if(e.type == 'touchstart' || e.type == 'touchmove' || e.type == 'touchend' || e.type == 'touchcancel'){
+                    var touch = e.originalEvent.touches[0] || e.originalEvent.changedTouches[0];
+                    out.x = touch.pageX;
+                    out.y = touch.pageY;
+                  } else if (e.type == 'mousedown' || e.type == 'mouseup' || e.type == 'mousemove' || e.type == 'mouseover'|| e.type=='mouseout' || e.type=='mouseenter' || e.type=='mouseleave' || e.type=='click') {
+                    out.x = e.pageX;
+                    out.y = e.pageY;
+                  }
+
+                  out.x -= canvas.offsetLeft;
+                  out.y -= canvas.offsetTop;
+
+                  return out;
+                };
+
+
+                var setMousePos = function (e) {
+                  window.pos = pointerEventToXY(e);
+                }
+
+                $(document).on('touchstart', setMousePos);
+                $(document).on('click', setMousePos);
+              }
+
               //renders one frame
               var renderGameFrame = function(){
 
@@ -504,6 +534,7 @@
                       if (--timeToFade <= 0) {
                         clearInterval(gameInterval);
                         gameInterval = setInterval(renderFinishFrame, 30);
+                        initFinish();
                       }
                   }
               };
@@ -515,16 +546,41 @@
                 if (++timeToFade <= timeToFadeOrig) {
                   context.globalAlpha = timeToFade/timeToFadeOrig;
                 }
-                var size = 40;
+
                 var scale = getGameScale();
+                var size = 30 * scale;
+
                 var imageW = hashtag.w * scale;
                 var imageH = hashtag.h * scale;
                 var imageX = (gameWidth - imageW) / 2;
                 var imageY = (gameHeight - imageH) / 2;
 
-                drawImage(hashtag, imageX, imageY - imageH / 2, scale);
-                // drawText("Это финиш!", { x: gameWidth / 2, y: gameHeight / 2 - 10, size: size, align: 'center' });
-                drawText("ВАШЕ ВРЕМЯ " + currentTimeString, { x: gameWidth / 2, y: imageY + imageH / 2 + (size * 0.5 / 2), size: size, align: 'center' });
+                var repeatWidth = 300 * scale;
+                var repeatHeight = 50 * scale;
+                var repeatX = (gameWidth - repeatWidth) / 2;
+                var repeatY = imageY + imageH + 20 * scale;
+
+                var titleX = repeatX + (repeatWidth / 2);
+                var titleY = repeatY + 7 * scale;
+
+                var timeStringX = gameWidth / 2;
+                var timeStringY = imageY - size - 25 * scale;
+
+                drawImage(hashtag, imageX, imageY, scale);
+
+                context.fillStyle = "#006600";
+                context.fillRect(repeatX, repeatY, repeatWidth, repeatHeight);
+                drawText("Ещё раз", { x: titleX, y: titleY, size: size, align: 'center' });
+
+                drawText("ВАШЕ ВРЕМЯ " + (currentTimeString || '01:12.351'), { x: timeStringX, y: timeStringY, size: size, align: 'center' });
+
+                var x = window.pos.x;
+                var y = window.pos.y;
+
+                // if (x >= repeatX && x <= (repeatX + repeatWidth) && y >= repeatY && y <= (repeatY + repeatHeight)) {
+                //   window.location.reload();
+                //   window.pos = {x: 0, y: 0};
+                // }
               }
 
 
@@ -730,7 +786,8 @@
                       init();
                       spritesheet = new Image();
                       spritesheet.onload = function(){
-                          splashInterval = setInterval(renderSplashFrame, 30);
+                          splashInterval = setInterval(renderFinishFrame, 30);
+                          initFinish();
                       };
                       spritesheet.src = "spritesheet.high.2.png";
                   }
