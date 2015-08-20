@@ -152,20 +152,20 @@
               И дату мероприятия
             </h3>
             <div class="image"></div>
-            <h1 class="inputs">#0<input type="text" inputmode="numeric" pattern="[0-9]*" id="input_x" maxlength="1" tabIndex="1" />0<input type="text" inputmode="numeric" pattern="[0-9]*" id="input_y" maxlength="1" tabIndex="2" /><input type="text" inputmode="numeric" pattern="[0-9]*" id="input_z" maxlength="2" tabIndex="3" /><input type="text" id="input_cloud" maxlength="2" tabIndex="4" />RULIT</h1>
+            <h1 class="inputs">#0<input type="text" autofocus="true" inputmode="numeric" pattern="[0-9]*" id="input_x" maxlength="1" tabIndex="1" />0<input type="text" inputmode="numeric" pattern="[0-9]*" id="input_y" maxlength="1" tabIndex="2" /><input type="text" inputmode="numeric" pattern="[0-9]*" id="input_z" maxlength="2" tabIndex="3" /><input type="text" id="input_cloud" maxlength="2" tabIndex="4" />RULIT</h1>
             <button>Проверить</button>
           </div>
 
           <div class="truefalse" id="true" style="display: none">
             <h2>Поздравляю!<br />Тебе удалось!</h2>
             <h1>Дата мероприятия:<br /><b>04-09-2015</b></h1>
-            <button>Далее</button>
+            <button autofocus="true">Далее</button>
           </div>
 
           <div class="truefalse" id="false" style="display: none">
             <h2>Не угадал</h2>
             <h1>Соберись,<br />и попробуй ещё раз</h1>
-            <button>Повторить</button>
+            <button autofocus="true">Повторить</button>
           </div>
         </div>
 
@@ -702,11 +702,13 @@
                         $('#form').fadeIn().css('display', 'table-cell');
 
                         $('#form input').on('input', function () {
+                          var $nextInput = $('[tabindex="' + (this.tabIndex + 1) +'"]');
+
                           if (this.value.length === this.maxLength)
-                            $('[tabindex="' + (this.tabIndex + 1) +'"]').focus();
+                            $nextInput.focus();
                         });
 
-                        $('#form button').on('click', function () {
+                        var checkForm = function () {
                           var input_x = $('#input_x').val();
                           var input_y = $('#input_y').val();
                           var input_z = $('#input_z').val();
@@ -724,7 +726,13 @@
                                 $('#false').fadeIn();
                               }
                             });
+                        }
+
+                        $('#form').on('keyup', function (e) {
+                          if (e.keyCode == 13) checkForm();
                         });
+
+                        $('#form button').on('click', checkForm);
 
                         $('#false button').on('click', function () {
                           $('#false').fadeOut({
