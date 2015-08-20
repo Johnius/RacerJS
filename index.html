@@ -735,12 +735,7 @@
                         $('#form button').on('click', checkForm);
 
                         $('#false button').on('click', function () {
-                          $('#false').fadeOut({
-                            complete: function() {
-                              $('#form input').val('');
-                              $('#form').fadeIn();
-                            }
-                          });
+                          window.location.reload();
                         });
 
                         $('#true button').on('click', function () {
