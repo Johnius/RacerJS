@@ -18,7 +18,7 @@
                 margin: 0;
                 padding: 0;
                 overflow: visible;
-                background: black;
+                background: #00001e;
                 font-family: Arial, Verdana, sans-serif;
                 line-height: 1;
                 text-transform: uppercase;
@@ -98,9 +98,11 @@
             #input_y {
               width: 1em;
             }
-            #input_z,
-            #input_cloud {
+            #input_z {
               width: 1.6em;
+            }
+            #input_cloud {
+              width: 2em;
             }
             #form .image {
               background: transparent url('hashtag.png') no-repeat top left;
@@ -139,8 +141,8 @@
 
           <div id="win" style="display: none">
             <h2>Ваше время <span id="yourtime"></span></h2>
-            <h3>Результат есть.<br />Сделай скриншот и опубликуй его в&nbsp;инстаграм с этим хештегом</h3>
-            <h1>#2015ARRULIT</h3>
+            <h3>Результат есть.<br />Сделай скриншот и опубликуй его<br />в&nbsp;INSTAGRAM и FACEBOOK<br />с этим хештегом</h3>
+            <h1>#2015RANRULIT</h3>
             <h3>И жди заслуженного приза!<br />Удачи!</h3>
           </div>
 
@@ -152,7 +154,7 @@
               И дату мероприятия
             </h3>
             <div class="image"></div>
-            <h1 class="inputs">#0<input type="text" autofocus="true" inputmode="numeric" pattern="[0-9]*" id="input_x" maxlength="1" tabIndex="1" />0<input type="text" inputmode="numeric" pattern="[0-9]*" id="input_y" maxlength="1" tabIndex="2" /><input type="text" inputmode="numeric" pattern="[0-9]*" id="input_z" maxlength="2" tabIndex="3" /><input type="text" id="input_cloud" maxlength="2" tabIndex="4" />RULIT</h1>
+            <h1 class="inputs">#0<input type="text" autofocus="true" inputmode="numeric" pattern="[0-9]*" id="input_x" maxlength="1" tabIndex="1" />0<input type="text" inputmode="numeric" pattern="[0-9]*" id="input_y" maxlength="1" tabIndex="2" /><input type="text" inputmode="numeric" pattern="[0-9]*" id="input_z" maxlength="2" tabIndex="3" /><input type="text" id="input_cloud" maxlength="3" tabIndex="4" />RULIT</h1>
             <button>Проверить</button>
           </div>
 
@@ -700,6 +702,7 @@
                         $('#yourtime').html(currentTimeString);
                         canvasObj.hide();
                         $('#form').fadeIn().css('display', 'table-cell');
+                        $('#form input').val('');
 
                         $('#form input').on('input', function () {
                           var $nextInput = $('[tabindex="' + (this.tabIndex + 1) +'"]');
@@ -714,7 +717,7 @@
                           var input_z = $('#input_z').val();
                           var input_cloud = $('#input_cloud').val().toUpperCase();
 
-                          if (input_x == 4 && input_y == 9 && input_z == 15 && input_cloud == 'AR')
+                          if (input_x == 4 && input_y == 9 && input_z == 15 && input_cloud == 'RAN')
                             $('#form').fadeOut({
                               complete: function() {
                                 $('#true').fadeIn();
@@ -1004,7 +1007,7 @@
                           splashInterval = setInterval(renderSplashFrame, 30);
                           // initFinish();
                       };
-                      spritesheet.src = "spritesheet.high.2.png";
+                      spritesheet.src = "spritesheet.high.3.png";
                   }
               }
           }());
