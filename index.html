@@ -7,26 +7,168 @@
         <script src="res.min.js"></script>
         <!--<script src="jquery.js"></script>-->
         <style>
-            * {
+            *:not(input[type="text"]):not(input[type="number"]) {
                 -webkit-user-select: none;
                 -moz-user-select: none;
                 -ms-user-select: none;
                 user-select: none;
+                box-sizing: border-box;
             }
             html, body {
                 margin: 0;
                 padding: 0;
                 overflow: visible;
                 background: black;
+                font-family: Arial, Verdana, sans-serif;
+                line-height: 1;
+                text-transform: uppercase;
+                color: white;
+                text-align: center;
+                font-size: 10px;
             }
-            canvas {
-                display: block;
+            @media (max-width: 767px) {
+              html, body {
+                font-size: 8px;
+              }
+            }
+
+            button {
+              font-size: 3em;
+              color: white;
+              background: #72af5f;
+              border: 0;
+              -webkit-appearance: none;
+              padding: .2em .5em;
+              text-transform: uppercase;
+            }
+
+            #game {
+                display: table;
                 position: absolute;
+                table-layout: fixed;
+            }
+            #game > div {
+              display: table-cell;
+              vertical-align: middle;
+            }
+
+
+            #win h1 {
+              font-size: 7em;
+              margin: .3em 0;
+            }
+            #win h2 {
+              color: #72af5f;
+              font-size: 4em;
+              font-weight: normal;
+              margin: 0 0 1em;
+            }
+            #win h3 {
+              font-size: 3em;
+              font-weight: normal;
+              margin: 1em 0;
+              line-height: 1.3;
+            }
+            #win > *:last-child {
+              margin-bottom: 0;
+            }
+
+            #form h3 {
+              font-size: 3em;
+              line-height: 1.3;
+              font-weight: normal;
+              margin: 0;
+              color: #d24a43;
+            }
+            #form h1 {
+              font-size: 5em;
+              margin: .5em 0;
+            }
+            #form .inputs input {
+              background-color: white;
+              border: 2px solid #b84140;
+              color: #b84140 !important;
+              font-size: inherit;
+              line-height: 1;
+              margin: 0 .1em;
+              text-align: center;
+              padding: 0;
+            }
+            #input_x,
+            #input_y {
+              width: 1em;
+            }
+            #input_z,
+            #input_cloud {
+              width: 1.6em;
+            }
+            #form .image {
+              background: transparent url('hashtag.png') no-repeat top left;
+              background-size: cover;
+              width: 40em;
+              height: 7.6em;
+              display: block;
+              margin: 1.5em auto;
+            }
+            .truefalse h2 {
+              font-size: 4em;
+              color: #d24a43;
+              font-weight: normal;
+              line-height: 1.3;
+              margin: 0;
+            }
+            .truefalse h1 {
+              font-size: 5em;
+              line-height: 1.3;
+              margin: .3em 0;
+            }
+            .truefalse h1 b {
+              font-size: 2em;
+            }
+            .truefalse button {
+              font-size: 5em;
+            }
+            #false h1 {
+              margin: 1em 0;
             }
         </style>
     </head>
     <body>
-        <canvas id="c"></canvas>
+        <div id="game">
+          <canvas id="c"></canvas>
+
+          <div id="win" style="display: none">
+            <h2>Ваше время <span id="yourtime"></span></h2>
+            <h3>Результат есть.<br />Сделай скриншот и опубликуй его в&nbsp;инстаграм с этим хештегом</h3>
+            <h1>#2015ARRULIT</h3>
+            <h3>И жди заслуженного приза!<br />Удачи!</h3>
+          </div>
+
+          <div id="form" style="display: none">
+            <h3>
+              Вставь найденные<br />
+              На трассе данные<br />
+              Получи хештег<br />
+              И дату мероприятия
+            </h3>
+            <div class="image"></div>
+            <h1 class="inputs">#0<input type="text" inputmode="numeric" pattern="[0-9]*" id="input_x" maxlength="1" tabIndex="1" />0<input type="text" inputmode="numeric" pattern="[0-9]*" id="input_y" maxlength="1" tabIndex="2" /><input type="text" inputmode="numeric" pattern="[0-9]*" id="input_z" maxlength="2" tabIndex="3" /><input type="text" id="input_cloud" maxlength="2" tabIndex="4" />RULIT</h1>
+            <button>Проверить</button>
+          </div>
+
+          <div class="truefalse" id="true" style="display: none">
+            <h2>Поздравляю!<br />Тебе удалось!</h2>
+            <h1>Дата мероприятия:<br /><b>04-09-2015</b></h1>
+            <button>Далее</button>
+          </div>
+
+          <div class="truefalse" id="false" style="display: none">
+            <h2>Не угадал</h2>
+            <h1>Соберись,<br />и попробуй ещё раз</h1>
+            <button>Повторить</button>
+          </div>
+        </div>
+
         <script type="text/javascript">
           var game = (function(){
               var isMobile = false;
@@ -81,18 +223,20 @@
               var startTime;
               var lastDelta = 0;
               var currentTimeString = "";
-              var timeToFade = 0.25 * 30;
+              var timeToFade = 0.4 * 30;
               var timeToFadeOrig = timeToFade;
               var finishOpacity = 0;
               var prevFrameHeight = 0;
+              var pauseResults = false;
 
               window.pos = {x: 0, y: 0};
+              var $game = $('#game');
 
               var roadParam = {
                   maxHeight: 900,
                   maxCurve:  700,
-                  length:    20,
-                  curvy:     0.8,
+                  length:    2,
+                  curvy:     0,
                   mountainy: 4,
                   zoneSize:  300
               }
@@ -234,6 +378,11 @@
                   canvas.width = gameSize.width;
                   canvas.height = gameSize.height;
 
+                  $game.css({
+                    width: gameSize.width,
+                    height: gameSize.height
+                  });
+
                   resize();
                   $(window).resize(resize);
 
@@ -318,33 +467,33 @@
               var deltaSlow = dpi > 100 ? 243 : 180;
               if (!isMobile) deltaSlow = 325;
 
-              var initFinish = function(){
-                var pointerEventToXY = function(e){
-                  var out = {x:0, y:0};
-
-                  if(e.type == 'touchstart' || e.type == 'touchmove' || e.type == 'touchend' || e.type == 'touchcancel'){
-                    var touch = e.originalEvent.touches[0] || e.originalEvent.changedTouches[0];
-                    out.x = touch.pageX;
-                    out.y = touch.pageY;
-                  } else if (e.type == 'mousedown' || e.type == 'mouseup' || e.type == 'mousemove' || e.type == 'mouseover'|| e.type=='mouseout' || e.type=='mouseenter' || e.type=='mouseleave' || e.type=='click') {
-                    out.x = e.pageX;
-                    out.y = e.pageY;
-                  }
-
-                  out.x -= canvas.offsetLeft;
-                  out.y -= canvas.offsetTop;
-
-                  return out;
-                };
-
-
-                var setMousePos = function (e) {
-                  window.pos = pointerEventToXY(e);
-                }
-
-                $(document).on('touchstart', setMousePos);
-                $(document).on('click', setMousePos);
-              }
+              // var initFinish = function(){
+              //   var pointerEventToXY = function(e){
+              //     var out = {x:0, y:0};
+              //
+              //     if(e.type == 'touchstart' || e.type == 'touchmove' || e.type == 'touchend' || e.type == 'touchcancel'){
+              //       var touch = e.originalEvent.touches[0] || e.originalEvent.changedTouches[0];
+              //       out.x = touch.pageX;
+              //       out.y = touch.pageY;
+              //     } else if (e.type == 'mousedown' || e.type == 'mouseup' || e.type == 'mousemove' || e.type == 'mouseover'|| e.type=='mouseout' || e.type=='mouseenter' || e.type=='mouseleave' || e.type=='click') {
+              //       out.x = e.pageX;
+              //       out.y = e.pageY;
+              //     }
+              //
+              //     out.x -= canvas.offsetLeft;
+              //     out.y -= canvas.offsetTop;
+              //
+              //     return out;
+              //   };
+              //
+              //
+              //   var setMousePos = function (e) {
+              //     window.pos = pointerEventToXY(e);
+              //   }
+              //
+              //   $(document).on('touchstart', setMousePos);
+              //   $(document).on('click', setMousePos);
+              // }
 
               //renders one frame
               var renderGameFrame = function(){
@@ -493,20 +642,31 @@
                   // --------------------------
                   // --     Draw the hud     --
                   // --------------------------
-                  var percentsPassed = ""+Math.round(absoluteIndex/(roadParam.length-render.depthOfField)*100)+"%";
-                  var now = new Date();
-                  var diff = now.getTime() - startTime.getTime();
+                  var passed = Math.round(absoluteIndex/(roadParam.length-render.depthOfField)*100);
+                  if (passed > 100)
+                    passed = 100;
+                  var percentsPassed = ""+passed+"%";
 
-                  var min = Math.floor(diff / 60000);
+                  if (passed <= 100 && !pauseResults) {
+                    var now = new Date();
+                    var diff = now.getTime() - startTime.getTime();
 
-                  var sec = Math.floor((diff - min * 60000) / 1000);
-                  if(sec < 10) sec = "0" + sec;
+                    var min = Math.floor(diff / 60000);
 
-                  var mili = Math.floor(diff - min * 60000 - sec * 1000);
-                  if(mili < 100) mili = "0" + mili;
-                  if(mili < 10) mili = "0" + mili;
+                    var sec = Math.floor((diff - min * 60000) / 1000);
+                    if(sec < 10) sec = "0" + sec;
 
-                  currentTimeString = ""+min+":"+sec+"."+mili;
+                    var mili = Math.floor(diff - min * 60000 - sec * 1000);
+                    if(mili < 100) mili = "0" + mili;
+                    if(mili < 10) mili = "0" + mili;
+
+                    currentTimeString = ""+min+":"+sec+"."+mili;
+
+                    if (passed == 100)
+                      pauseResults = true;
+                  }
+
+
 
                   drawText(currentTimeString, {x: gameWidth / 2, y: 0, size: 30, color: 'white', align: 'center', font: 'Courier New', bold: true});
                   drawText(percentsPassed, {x: gameWidth - 10, y: 0, size: 30, color: 'white', align: 'end', font: 'Courier New', bold: true});
@@ -533,55 +693,102 @@
 
                       if (--timeToFade <= 0) {
                         clearInterval(gameInterval);
-                        gameInterval = setInterval(renderFinishFrame, 30);
-                        initFinish();
+                        window.jumpNext = function (e) {
+                          console.log(e.target, this);
+                        }
+
+                        $('#yourtime').html(currentTimeString);
+                        canvasObj.hide();
+                        $('#form').fadeIn().css('display', 'table-cell');
+
+                        $('#form input').on('input', function () {
+                          if (this.value.length === this.maxLength)
+                            $('[tabindex="' + (this.tabIndex + 1) +'"]').focus();
+                        });
+
+                        $('#form button').on('click', function () {
+                          var input_x = $('#input_x').val();
+                          var input_y = $('#input_y').val();
+                          var input_z = $('#input_z').val();
+                          var input_cloud = $('#input_cloud').val().toUpperCase();
+
+                          if (input_x == 4 && input_y == 9 && input_z == 15 && input_cloud == 'AR')
+                            $('#form').fadeOut({
+                              complete: function() {
+                                $('#true').fadeIn();
+                              }
+                            });
+                          else
+                            $('#form').fadeOut({
+                              complete: function() {
+                                $('#false').fadeIn();
+                              }
+                            });
+                        });
+
+                        $('#false button').on('click', function () {
+                          $('#false').fadeOut({
+                            complete: function() {
+                              $('#form input').val('');
+                              $('#form').fadeIn();
+                            }
+                          });
+                        });
+
+                        $('#true button').on('click', function () {
+                          $('#true').fadeOut({
+                            complete: function() {
+                              $('#win').fadeIn();
+                            }
+                          });
+                        });
                       }
                   }
               };
 
-              var renderFinishFrame = function() {
-                // Clean screen
-                context.fillStyle = "#000";
-                context.fillRect(0, 0, render.width, render.height);
-                if (++timeToFade <= timeToFadeOrig) {
-                  context.globalAlpha = timeToFade/timeToFadeOrig;
-                }
-
-                var scale = getGameScale();
-                var size = 30 * scale;
-
-                var imageW = hashtag.w * scale;
-                var imageH = hashtag.h * scale;
-                var imageX = (gameWidth - imageW) / 2;
-                var imageY = (gameHeight - imageH) / 2;
-
-                var repeatWidth = 300 * scale;
-                var repeatHeight = 50 * scale;
-                var repeatX = (gameWidth - repeatWidth) / 2;
-                var repeatY = imageY + imageH + 20 * scale;
-
-                var titleX = repeatX + (repeatWidth / 2);
-                var titleY = repeatY + 7 * scale;
-
-                var timeStringX = gameWidth / 2;
-                var timeStringY = imageY - size - 25 * scale;
-
-                drawImage(hashtag, imageX, imageY, scale);
-
-                context.fillStyle = "#006600";
-                context.fillRect(repeatX, repeatY, repeatWidth, repeatHeight);
-                drawText("Ещё раз", { x: titleX, y: titleY, size: size, align: 'center' });
-
-                drawText("ВАШЕ ВРЕМЯ " + (currentTimeString || '01:12.351'), { x: timeStringX, y: timeStringY, size: size, align: 'center' });
-
-                var x = window.pos.x;
-                var y = window.pos.y;
-
-                // if (x >= repeatX && x <= (repeatX + repeatWidth) && y >= repeatY && y <= (repeatY + repeatHeight)) {
-                //   window.location.reload();
-                //   window.pos = {x: 0, y: 0};
-                // }
-              }
+              // var renderFinishFrame = function() {
+              //   // Clean screen
+              //   context.fillStyle = "#000";
+              //   context.fillRect(0, 0, render.width, render.height);
+              //   if (++timeToFade <= timeToFadeOrig) {
+              //     context.globalAlpha = timeToFade/timeToFadeOrig;
+              //   }
+              //
+              //   var scale = getGameScale();
+              //   var size = 30 * scale;
+              //
+              //   var imageW = hashtag.w * scale;
+              //   var imageH = hashtag.h * scale;
+              //   var imageX = (gameWidth - imageW) / 2;
+              //   var imageY = (gameHeight - imageH) / 2;
+              //
+              //   var repeatWidth = 300 * scale;
+              //   var repeatHeight = 50 * scale;
+              //   var repeatX = (gameWidth - repeatWidth) / 2;
+              //   var repeatY = imageY + imageH + 20 * scale;
+              //
+              //   var titleX = repeatX + (repeatWidth / 2);
+              //   var titleY = repeatY + 7 * scale;
+              //
+              //   var timeStringX = gameWidth / 2;
+              //   var timeStringY = imageY - size - 25 * scale;
+              //
+              //   drawImage(hashtag, imageX, imageY, scale);
+              //
+              //   context.fillStyle = "#006600";
+              //   context.fillRect(repeatX, repeatY, repeatWidth, repeatHeight);
+              //   drawText("Ещё раз", { x: titleX, y: titleY, size: size, align: 'center' });
+              //
+              //   drawText("ВАШЕ ВРЕМЯ " + (currentTimeString || '01:12.351'), { x: timeStringX, y: timeStringY, size: size, align: 'center' });
+              //
+              //   var x = window.pos.x;
+              //   var y = window.pos.y;
+              //
+              //   // if (x >= repeatX && x <= (repeatX + repeatWidth) && y >= repeatY && y <= (repeatY + repeatHeight)) {
+              //   //   window.location.reload();
+              //   //   window.pos = {x: 0, y: 0};
+              //   // }
+              // }
 
 
               // Drawing primitive
@@ -686,6 +893,11 @@
                     canvas.height = gameSize.height;
                     context.width = gameSize.width;
                     context.height = gameSize.height;
+
+                    $game.css({
+                      width: gameSize.width,
+                      height: gameSize.height
+                    });
                   }
 
                   if (clientSize.width / clientSize.height > render.width / render.height) {
@@ -696,8 +908,8 @@
                   }
 
                   var transform = "scale(" + scale + ")";
-                  if (isMobile) canvasObj.css("MozTransform", transform).css("transform", transform).css("WebkitTransform", transform);
-                  canvasObj.css({
+                  if (isMobile) $game.css("MozTransform", transform).css("transform", transform).css("WebkitTransform", transform);
+                  $game.css({
                       top: (scale - 1) * render.height / 2 + (clientSize.height - render.height * scale) / 2,
                       left: (scale - 1) * render.width / 2 + (clientSize.width - render.width * scale) / 2
                   });
@@ -786,8 +998,8 @@
                       init();
                       spritesheet = new Image();
                       spritesheet.onload = function(){
-                          splashInterval = setInterval(renderFinishFrame, 30);
-                          initFinish();
+                          splashInterval = setInterval(renderSplashFrame, 30);
+                          // initFinish();
                       };
                       spritesheet.src = "spritesheet.high.2.png";
                   }
