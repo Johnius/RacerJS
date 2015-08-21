@@ -738,7 +738,13 @@
                         $('#form button').on('click', checkForm);
 
                         $('#false button').on('click', function () {
-                          window.location.reload();
+                          // window.location.reload();
+                          $('#false').fadeOut({
+                            complete: function () {
+                              $('#form').fadeIn();
+                              $('#form input').val('');
+                            }
+                          });
                         });
 
                         $('#true button').on('click', function () {
@@ -860,6 +866,8 @@
                   drawImage(background_orig, first-background.w +1, 0, 1);
                   drawImage(background_orig, first+background.w -1, 0, 1);
                   drawImage(background_orig, first+background.w*2 -2, 0, 1);
+                  drawImage(background_orig, first+background.w*3 -4, 0, 1);
+                  drawImage(background_orig, first+background.w*4 -6, 0, 1);
                   drawImage(background, first, 0, 1);
               }
 
