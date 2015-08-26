@@ -428,10 +428,13 @@
                       window.turnRight = false;
                     }
                     window.activated = true;
-                  });
-                  $(document).on('touchend', function(e){
+                  }).on('touchend', function(e){
                     window.turnLeft = false;
                     window.turnRight = false;
+                    window.activated = false;
+                  }).on('mousedown', function(){
+                    window.activated = true;
+                  }).on('mouseup', function(){
                     window.activated = false;
                   });
                   generateRoad();
